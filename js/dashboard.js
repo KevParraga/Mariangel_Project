@@ -152,6 +152,7 @@ let nivelCargaGlobal = 0;
 let bienestarHoy = null;
 let bienestarUltimoRegistro = null;
 let bienestarHistorial = [];
+let encuestaHoy = null;
 let currentCvObjectURL = null;
 
 // ==================== FUNCIONES DE ALERTA ====================
@@ -274,23 +275,121 @@ async function guardarBienestarDiario(scoreEmo, scoreFis, nivelCarga) {
     return false;
 }
 
-function mostrarBienestarHoyEnBitacora() {
-    const contenedor = document.getElementById('bitacora-content');
-    if (!contenedor || !bienestarHoy) return;
+async function fetchEncuestaHoy() {
+    const currentUser = JSON.parse(localStorage.getItem('current_user')) || {};
+    const email = currentUser.email;
+    if (!email) return;
 
-    const div = document.createElement('div');
-    div.className = 'bitacora-item';
-    div.style.borderLeft = '4px solid #2563eb';
-    div.style.background = '#eff6ff';
-    div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong><i class="fas fa-heart-pulse"></i> 🗒️ Bienestar Diario</strong>
-            <span style="font-size:0.8rem;">${bienestarHoy.fecha}</span>
+    try {
+        const response = await fetch(window.location.origin + '/Ecosistema academico/api_encuesta.php?email=' + encodeURIComponent(email), {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        if (response.ok && data.success && Array.isArray(data.records)) {
+            const hoy = getLocalDateString();
+            encuestaHoy = data.records.find(r => r.fecha === hoy) || null;
+        }
+    } catch (error) {
+        console.warn('No se pudo cargar la encuesta de bienestar del día:', error);
+    }
+}
+
+function diagnosticoEmocional(scoreEmo) {
+    if (scoreEmo >= 19) {
+        return {
+            texto: 'Presentas indicadores de cansancio mental o niveles altos de estrés acumulado en tu jornada.',
+            tipsFallback: [
+                'Pon en práctica la regla 20-20-20 para relajar la mente periódicamente.',
+                'Escribe tus pendientes principales para liberar espacio cognitivo.'
+            ]
+        };
+    }
+    if (scoreEmo >= 13) {
+        return {
+            texto: 'Tu balance psicológico es moderado. Se observa estabilidad pero con ligeros focos de fatiga rutinaria.',
+            tipsFallback: ['Dedica de 10 a 15 minutos a un pasatiempo totalmente desconectado de dispositivos.']
+        };
+    }
+    return {
+        texto: '¡Excelente balance emocional! Tu mente se encuentra en un estado óptimo de calma, enfoque y claridad.',
+        tipsFallback: ['Sigue manteniendo tus límites saludables de rendimiento y descanso.']
+    };
+}
+
+function diagnosticoFisico(scoreFis) {
+    if (scoreFis >= 19) {
+        return {
+            texto: 'El consultorio detecta fatiga corporal acumulada, tensión muscular o falta de pausas físicas.',
+            tipsFallback: [
+                'Realiza estiramientos suaves enfocados en el cuello, hombros y lumbares.',
+                'Asegúrate de beber un vaso de agua ahora mismo para optimizar la hidratación.'
+            ]
+        };
+    }
+    if (scoreFis >= 13) {
+        return {
+            texto: 'Estado físico regular. El cuerpo responde bien pero denota sutiles demandas de descanso postural.',
+            tipsFallback: ['Levántate del asiento y camina por la habitación durante 5 minutos para oxigenar los músculos.']
+        };
+    }
+    return {
+        texto: 'Tu energía corporal y salud física reportan condiciones estables, libres de tensiones molestas.',
+        tipsFallback: ['Continúa protegiendo tu postura erguida frente al escritorio y tus comidas.']
+    };
+}
+
+function renderEstadoBienestarHoy() {
+    const contenedor = document.getElementById('bitacora-bienestar-container');
+    if (!contenedor) return;
+
+    const hoy = getLocalDateString();
+    const registroBien = bienestarHoy && bienestarHoy.fecha === hoy ? bienestarHoy : null;
+    const registroEnc = encuestaHoy && encuestaHoy.fecha === hoy ? encuestaHoy : null;
+
+    if (!registroBien && !registroEnc) {
+        contenedor.innerHTML = `
+            <div style="padding:18px; background:#f8fafc; border-radius:12px; text-align:center;">
+                <p style="margin:0 0 12px 0; color:#475569;">Aún no completaste tu test de bienestar de hoy.</p>
+                <a href="bienestar.php" class="btn btn-primary" style="display:inline-block; padding:10px 20px; text-decoration:none;">
+                    <i class="fas fa-heart-pulse"></i> Realizar test de bienestar
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    const scoreEmo = registroEnc ? Number(registroEnc.score_emo) : Number(registroBien.score_emo);
+    const scoreFis = registroEnc ? Number(registroEnc.score_fis) : Number(registroBien.score_fis);
+
+    const diagEmo = diagnosticoEmocional(scoreEmo);
+    const diagFis = diagnosticoFisico(scoreFis);
+
+    const tipsEmo = registroEnc && registroEnc.tips_emocionales
+        ? registroEnc.tips_emocionales.split('\n').map(t => t.trim()).filter(Boolean)
+        : diagEmo.tipsFallback;
+    const tipsFis = registroEnc && registroEnc.tips_fisicos
+        ? registroEnc.tips_fisicos.split('\n').map(t => t.trim()).filter(Boolean)
+        : diagFis.tipsFallback;
+
+    contenedor.innerHTML = `
+        <div style="padding:18px; border-radius:12px; background:#fafafa; border-left:5px solid #6c5ce7; margin-bottom:14px;">
+            <h4 style="margin:0 0 8px 0; color:#6c5ce7;">🧠 Salud Emocional</h4>
+            <p style="margin:0 0 10px 0; color:#2d3436;">${diagEmo.texto}</p>
+            <strong style="font-size:0.9rem;">💡 Consejos recomendados:</strong>
+            <ul style="margin:6px 0 0 0; padding-left:20px; color:#475569;">
+                ${tipsEmo.map(t => `<li>${t}</li>`).join('')}
+            </ul>
         </div>
-        <p style="margin:10px 0 0 0;">Test guardado. Nivel de carga: <strong>${bienestarHoy.nivel_carga}%</strong>. Emocional: <strong>${bienestarHoy.score_emo}</strong>, Físico: <strong>${bienestarHoy.score_fis}</strong>.</p>
+        <div style="padding:18px; border-radius:12px; background:#fafafa; border-left:5px solid #00b894;">
+            <h4 style="margin:0 0 8px 0; color:#00b894;">🩺 Consultorio Clínico Virtual</h4>
+            <p style="margin:0 0 10px 0; color:#2d3436;">${diagFis.texto}</p>
+            <strong style="font-size:0.9rem;">💡 Consejos recomendados:</strong>
+            <ul style="margin:6px 0 0 0; padding-left:20px; color:#475569;">
+                ${tipsFis.map(t => `<li>${t}</li>`).join('')}
+            </ul>
+        </div>
     `;
-
-    contenedor.prepend(div);
 }
 
 // ==================== NAVEGACIÓN Y MENÚ ====================
@@ -686,9 +785,11 @@ function obtenerEstadoClase(materia) {
 
 // ==================== BITÁCORA ====================
 function renderBitacora() {
+    renderEstadoBienestarHoy();
+
     const b = document.getElementById('bitacora-content');
     if (!b) return;
-    
+
     b.innerHTML = '';
     
     const registroBienestar = bienestarHoy && bienestarHoy.fecha === getLocalDateString() ? bienestarHoy : null;
@@ -1009,6 +1110,7 @@ function renderNotas() {
     }
 
     await fetchBienestarData();
+    await fetchEncuestaHoy();
     await fetchMateriasFromServer();
     render();
     renderNotas();
