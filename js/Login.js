@@ -43,8 +43,13 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         btn.innerHTML = '<i class="fas fa-check"></i> ¡Bienvenido!';
         btn.style.backgroundColor = '#22c55e';
 
+        const role = (result.user && result.user.role) ? String(result.user.role).toLowerCase() : 'user';
+        let destino = 'dashboard.html';
+        if (role === 'admin') destino = 'panel_admin.php';
+        else if (role === 'enfermera' || role === 'psicologa') destino = 'panel_salud.php';
+
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            window.location.href = destino;
         }, 800);
     } catch (error) {
 

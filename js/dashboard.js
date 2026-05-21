@@ -457,6 +457,91 @@ function load() {
     document.getElementById('sideProfilePic').src = pic;
     document.getElementById('bigProfilePic').src = pic;
     renderCVPreview();
+    renderHorarioPreview();
+
+    renderHorasAdminTabla();
+    const horasAdminEl = document.getElementById('horas-administrative-val');
+    if (horasAdminEl) horasAdminEl.textContent = totalHorasAdminDelMes() + 'h';
+}
+
+function renderHorarioPreview() {
+    const preview = document.getElementById('horario-preview');
+    const statusBox = document.getElementById('horario-archivo-status');
+    const nameLabel = document.getElementById('horario-nombre-archivo');
+    if (!preview) return;
+
+    const user = JSON.parse(localStorage.getItem('current_user')) || {};
+    const url = user.horarioUrl || user.horario_url;
+
+    if (!url) {
+        preview.innerHTML = '';
+        if (nameLabel) nameLabel.textContent = 'No se ha subido ningún documento adjunto';
+        if (statusBox) {
+            statusBox.style.background = '#f8fafc';
+            statusBox.style.borderColor = '#cbd5e1';
+            statusBox.style.color = '#64748b';
+        }
+        return;
+    }
+
+    const fileName = url.split('/').pop();
+    if (nameLabel) nameLabel.textContent = `Archivo cargado: ${fileName}`;
+    if (statusBox) {
+        statusBox.style.background = '#f0fdf4';
+        statusBox.style.borderColor = '#bbf7d0';
+        statusBox.style.color = '#166534';
+    }
+
+    const lower = url.toLowerCase();
+    const isPdf = lower.endsWith('.pdf');
+
+    if (isPdf) {
+        preview.innerHTML = `<iframe src="${url}" style="width:100%; height:500px; border:none; border-radius:10px; background:#f8fafc;"></iframe>`;
+    } else {
+        preview.innerHTML = `
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; text-align:center;">
+                <img src="${url}" alt="Horario del profesor" style="max-width:100%; max-height:520px; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto;">
+            </div>
+        `;
+    }
+}
+
+async function handleHorarioUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('horario-preview');
+    const nameLabel = document.getElementById('horario-nombre-archivo');
+    if (preview) preview.innerHTML = '<p style="margin:0; color:#64748b; font-size:0.85rem;">Subiendo horario...</p>';
+    if (nameLabel) nameLabel.textContent = `Subiendo: ${file.name}`;
+
+    const form = new FormData();
+    form.append('horario', file);
+    const user = JSON.parse(localStorage.getItem('current_user')) || {};
+    if (user.email) form.append('email', user.email);
+
+    try {
+        const resp = await fetch(window.location.origin + '/Ecosistema academico/upload_horario.php', {
+            method: 'POST',
+            body: form,
+            credentials: 'same-origin'
+        });
+        const j = await resp.json();
+        if (!resp.ok || !j.success) throw new Error(j.error || 'Upload failed');
+
+        const stored = JSON.parse(localStorage.getItem('current_user')) || {};
+        stored.horarioUrl = j.url;
+        localStorage.setItem('current_user', JSON.stringify(stored));
+
+        renderHorarioPreview();
+        if (typeof registrarAccionAutomatica === 'function') {
+            registrarAccionAutomatica(`Horario: El docente cargó el documento oficial de su horario (${file.name}).`);
+        }
+        showAlert('Horario cargado correctamente', 'success');
+    } catch (err) {
+        if (preview) preview.innerHTML = '<p style="margin:0; color:#b91c1c; font-size:0.85rem;">Error al subir el horario.</p>';
+        showAlert('Error al subir el horario: ' + err.message, 'error');
+    }
 }
 
 function saveProfile() {
@@ -510,6 +595,9 @@ async function handleCVChange(e) {
         delete user.cvData;
         localStorage.setItem('current_user', JSON.stringify(user));
         renderCVPreview();
+        if (typeof registrarAccionAutomatica === 'function') {
+            registrarAccionAutomatica(`Perfil: Se subió la hoja de vida (${file.name}).`);
+        }
         showAlert('Hoja de vida subida correctamente', 'success');
     } catch (err) {
         if (preview) preview.innerHTML = '<p style="margin:0; color:#b91c1c;">Error al subir el archivo.</p>';
@@ -541,6 +629,9 @@ function initializeFileInputs() {
                 user2.profilePic = j.url;
                 localStorage.setItem('current_user', JSON.stringify(user2));
                 load();
+                if (typeof registrarAccionAutomatica === 'function') {
+                    registrarAccionAutomatica(`Perfil: Se actualizó la foto de perfil.`);
+                }
                 showAlert('Foto de perfil actualizada', 'success');
             } catch (err) {
                 showAlert('Error al subir la foto: ' + err.message, 'error');
@@ -631,56 +722,68 @@ async function addMateria() {
     const n = document.getElementById('m-nombre').value.trim();
     const seccion = document.getElementById('m-seccion').value.trim();
     const tipo = document.getElementById('m-tipo').value.trim();
-    const d = document.getElementById('m-dia').value;
+    const fecha = document.getElementById('m-fecha').value;
     const horaInicio = document.getElementById('m-hora-inicio').value;
     const inicioAmpm = document.getElementById('m-hora-inicio-ampm').value;
     const horaFin = document.getElementById('m-hora-fin').value;
     const finAmpm = document.getElementById('m-hora-fin-ampm').value;
-    
-    if(!n || !seccion || !tipo || !horaInicio || !horaFin) {
-        showAlert("Completa todos los datos de la materia", "warning");
+
+    if(!n || !seccion || !tipo || !fecha || !horaInicio || !horaFin) {
+        showAlert("Completa todos los datos de la materia, incluyendo la fecha", "warning");
         return;
     }
-    
+
+    if(!esFechaISO(fecha)) {
+        showAlert("Fecha inválida", "error");
+        return;
+    }
+
     if(!materiasValidas.includes(n)) {
         showAlert(`"${n}" no es una materia válida. Selecciona una de la lista desplegable.`, "error");
         return;
     }
-    
+
+    const d = fecha;
+
     const materiaDuplicada = materias.some(m => m.n === n && m.d === d && m.seccion === seccion && m.tipo === tipo);
     if(materiaDuplicada) {
-        showAlert(`Ya tienes la materia "${n}" programada para los ${d}. No puedes duplicarla.`, "error");
+        showAlert(`Ya tienes la materia "${n}" programada para el ${formatearFechaCorta(d)}. No puedes duplicarla.`, "error");
         return;
     }
-    
+
     const inicio = parse12HourTime(horaInicio, inicioAmpm);
     const fin = parse12HourTime(horaFin, finAmpm);
     const inicioMinutos = inicio.hour * 60 + inicio.minute;
     const finMinutos = fin.hour * 60 + fin.minute;
     let duracionHoras = (finMinutos - inicioMinutos) / 60;
-    duracionHoras = Math.round(duracionHoras * 10) / 10;
-    
+
     if(duracionHoras <= 0) {
         showAlert("La hora de salida debe ser posterior a la hora de inicio", "error");
         return;
     }
-    
+
+    duracionHoras = Math.round(duracionHoras * 4) / 4;
+
     if(duracionHoras > 3) {
         showAlert("La duración máxima por clase es de 3 horas", "error");
         return;
     }
-    
+
     if(materias.length >= 6) {
         showAlert("Límite alcanzado: máximo 6 materias", "error");
         return;
     }
-    
-    const horasActuales = materias.reduce((total, m) => total + m.duracion, 0);
-    if(horasActuales + duracionHoras > 8) {
-        showAlert(`Límite de horas excedido: máximo 8 horas semanales. Actual: ${horasActuales}h, intentas agregar: ${duracionHoras}h`, "error");
+
+    const semanaNueva = getSemanaKey(d);
+    const horasEnSemana = materias.reduce((total, m) => {
+        if (!esFechaISO(m.d)) return total;
+        return getSemanaKey(m.d) === semanaNueva ? total + (Number(m.duracion) || 0) : total;
+    }, 0);
+    if(horasEnSemana + duracionHoras > 8) {
+        showAlert(`Límite excedido: máximo 8 hs académicas por semana. Ya tenés ${horasEnSemana}h cargadas esa semana, intentás agregar ${duracionHoras}h.`, "error");
         return;
     }
-    
+
     const conflicto = materias.some(m => {
         if(m.d !== d) return false;
         const mInicio = parse12HourTime(m.horaInicio.split(' ')[0], m.horaInicio.split(' ')[1]);
@@ -689,22 +792,22 @@ async function addMateria() {
         const finExistente = mFin.hour * 60 + mFin.minute;
         return inicioMinutos < finExistente && finMinutos > inicioExistente;
     });
-    
+
     if(conflicto) {
-        showAlert("Conflicto de horario: ya tienes una clase programada en ese horario", "error");
+        showAlert("Conflicto de horario: ya tienes una clase programada ese día en ese horario", "error");
         return;
     }
 
-    const newMateria = { 
-        id: Date.now(), 
+    const newMateria = {
+        id: Date.now(),
         serverId: null,
-        n, 
+        n,
         seccion,
         tipo,
-        d, 
-        horaInicio: inicio.display, 
-        horaFin: fin.display, 
-        duracion: duracionHoras 
+        d,
+        horaInicio: inicio.display,
+        horaFin: fin.display,
+        duracion: duracionHoras
     };
 
     materias.push(newMateria);
@@ -712,7 +815,7 @@ async function addMateria() {
     document.getElementById('m-nombre').value = '';
     document.getElementById('m-seccion').value = '';
     document.getElementById('m-tipo').value = '';
-    document.getElementById('m-dia').selectedIndex = 0;
+    document.getElementById('m-fecha').value = '';
     document.getElementById('m-hora-inicio').value = '07:00';
     document.getElementById('m-hora-inicio-ampm').value = 'AM';
     document.getElementById('m-hora-fin').value = '08:00';
@@ -720,7 +823,7 @@ async function addMateria() {
 
     try {
         await saveMateriaToServer(newMateria);
-        registrarAccionAutomatica(`Planificación Curricular: Se añadió la materia "${n}" para ${d} de ${inicio.display} a ${fin.display}.`);
+        registrarAccionAutomatica(`Planificación Curricular: Se añadió la materia "${n}" para el ${formatearFechaCorta(d)} de ${inicio.display} a ${fin.display}.`);
         showAlert("Materia agregada correctamente y sincronizada con el servidor", "success");
     } catch (error) {
         showAlert("Materia agregada localmente, pero no se pudo sincronizar con el servidor: " + error.message, "warning");
@@ -729,57 +832,84 @@ async function addMateria() {
     render();
 }
 
-async function delMateria(id) {
+async function cancelarMateria(id) {
     const materia = materias.find(x => x.id === id);
+    if (!materia) return;
+
+    const motivo = prompt(`Motivo de cancelación de "${materia.n}" (${formatearFechaCorta(materia.d)} ${materia.horaInicio} - ${materia.horaFin}):`);
+    if (motivo === null) return;
+    const motivoTrim = motivo.trim();
+    if (!motivoTrim) {
+        showAlert('Debés indicar un motivo para cancelar.', 'warning');
+        return;
+    }
+
+    const canceladas = loadCanceladas();
+    canceladas.academicas.unshift({
+        id: Date.now(),
+        nombre: materia.n,
+        seccion: materia.seccion,
+        tipo: materia.tipo,
+        fecha: materia.d,
+        horaInicio: materia.horaInicio,
+        horaFin: materia.horaFin,
+        duracion: materia.duracion,
+        motivo: motivoTrim,
+        canceladaEn: timestampISO()
+    });
+    saveCanceladas(canceladas);
 
     try {
         await deleteMateriaFromServer(id);
-        registrarAccionAutomatica(`Planificación Curricular: Se eliminó la materia "${materia ? materia.n : 'desconocida'}" del horario.`);
-        showAlert("Materia eliminada correctamente", "info");
+        registrarAccionAutomatica(`Planificación Curricular: Se canceló la materia "${materia.n}" (${formatearFechaCorta(materia.d)}). Motivo: ${motivoTrim}.`);
+        showAlert('Materia cancelada y registrada.', 'info');
     } catch (error) {
         materias = materias.filter(x => x.id !== id);
         localStorage.setItem(getUserKey('db_materias'), JSON.stringify(materias));
-        showAlert("Materia eliminada localmente, pero no se pudo eliminar en el servidor: " + error.message, "warning");
+        showAlert('Materia cancelada localmente, pero no se pudo sincronizar con el servidor: ' + error.message, 'warning');
     }
 
     render();
 }
 
+// Mantenemos el nombre viejo como alias por compatibilidad con cualquier handler residual
+async function delMateria(id) { return cancelarMateria(id); }
+
 function obtenerEstadoClase(materia) {
+    if (!esFechaISO(materia.d)) {
+        return { estado: 'futura', mensaje: `📆 ${materia.d} de ${materia.horaInicio} a ${materia.horaFin}`, color: '' };
+    }
+
     const ahora = new Date();
-    const diasSemana = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5 };
-    const diaClase = diasSemana[materia.d];
-    const diaActual = ahora.getDay();
-    
     const [horaInicioTime, horaInicioPeriod = 'AM'] = materia.horaInicio.split(' ');
     const [horaFinTime, horaFinPeriod = 'AM'] = materia.horaFin.split(' ');
     const { hour: horaInicioH, minute: minutoInicio } = parse12HourTime(horaInicioTime, horaInicioPeriod);
     const { hour: horaFinH, minute: minutoFin } = parse12HourTime(horaFinTime, horaFinPeriod);
-    
-    const fechaInicio = new Date(ahora);
-    fechaInicio.setDate(ahora.getDate() + (diaClase - diaActual));
-    fechaInicio.setHours(horaInicioH, minutoInicio, 0);
-    
-    const fechaFin = new Date(ahora);
-    fechaFin.setDate(ahora.getDate() + (diaClase - diaActual));
-    fechaFin.setHours(horaFinH, minutoFin, 0);
-    
+
+    const [yC, mC, dC] = materia.d.split('-').map(Number);
+    const fechaInicio = new Date(yC, mC - 1, dC, horaInicioH, minutoInicio, 0);
+    const fechaFin = new Date(yC, mC - 1, dC, horaFinH, minutoFin, 0);
+
     const ahoraMs = ahora.getTime();
     const inicioMs = fechaInicio.getTime();
     const finMs = fechaFin.getTime();
-    
-    if(diaActual === diaClase && ahoraMs >= inicioMs && ahoraMs <= finMs) {
+
+    const hoyISO = getLocalDateString();
+    const esHoy = materia.d === hoyISO;
+    const fechaTxt = formatearFechaCorta(materia.d);
+
+    if (esHoy && ahoraMs >= inicioMs && ahoraMs <= finMs) {
         return { estado: 'activa', mensaje: `🔴 EN CLASE AHORA MISMO (hasta las ${materia.horaFin})`, color: 'clase-activa' };
-    } else if(diaActual === diaClase && ahoraMs < inicioMs) {
+    } else if (esHoy && ahoraMs < inicioMs) {
         const minutosRestantes = Math.round((inicioMs - ahoraMs) / (1000 * 60));
         return { estado: 'proxima', mensaje: `🟡 PRÓXIMA CLASE en ${minutosRestantes} minutos`, color: 'clase-proxima' };
-    } else if(diaActual === diaClase && ahoraMs > finMs) {
+    } else if (esHoy && ahoraMs > finMs) {
         return { estado: 'pasada', mensaje: '✅ CLASE FINALIZADA hoy', color: '' };
-    } else if(diaClase > diaActual || (diaClase === diaActual && ahoraMs < inicioMs)) {
-        const diasRestantes = diaClase > diaActual ? diaClase - diaActual : 7 - (diaActual - diaClase);
-        return { estado: 'futura', mensaje: `📅 PRÓXIMA CLASE el ${materia.d} de ${materia.horaInicio} a ${materia.horaFin} (en ${diasRestantes} días)`, color: '' };
+    } else if (inicioMs > ahoraMs) {
+        const diasRestantes = Math.ceil((inicioMs - ahoraMs) / (1000 * 60 * 60 * 24));
+        return { estado: 'futura', mensaje: `📅 PRÓXIMA CLASE el ${fechaTxt} de ${materia.horaInicio} a ${materia.horaFin} (en ${diasRestantes} día${diasRestantes === 1 ? '' : 's'})`, color: '' };
     } else {
-        return { estado: 'pasada', mensaje: `📆 PRÓXIMA CLASE el próximo ${materia.d} de ${materia.horaInicio} a ${materia.horaFin}`, color: '' };
+        return { estado: 'pasada', mensaje: `📆 CLASE PASADA el ${fechaTxt} de ${materia.horaInicio} a ${materia.horaFin}`, color: '' };
     }
 }
 
@@ -812,8 +942,7 @@ function renderBitacora() {
                 <strong><i class="fas fa-exclamation-triangle"></i> ⚠️ ALERTA CRÍTICA DE SALUD</strong>
                 <span style="font-size:0.8rem;">${new Date().toLocaleDateString()}</span>
             </div>
-            <p style="margin-top:8px;">📊 Nivel de carga detectado: <strong>${nivelCargaActual}%</strong></p>
-            <p>🛌 Se recomienda encarecidamente: reducir actividades académicas, descansar más horas y reorganizar tu carga laboral. Tu bienestar es prioritario.</p>
+            <p style="margin-top:8px;">🛌 Se recomienda encarecidamente: reducir actividades académicas, descansar más horas y reorganizar tu carga laboral. Tu bienestar es prioritario.</p>
             <p>💡 <em>Consejo: Tómate un descanso de 15 minutos cada 2 horas y procura dormir al menos 7 horas.</em></p>
         `;
         b.appendChild(alertaDiv);
@@ -827,8 +956,7 @@ function renderBitacora() {
                 <strong><i class="fas fa-chart-line"></i> 🟠 CARGA ACADÉMICA MODERADA</strong>
                 <span style="font-size:0.8rem;">${new Date().toLocaleDateString()}</span>
             </div>
-            <p style="margin-top:8px;">📊 Nivel de carga: <strong>${nivelCargaActual}%</strong></p>
-            <p>💡 Intenta equilibrar tus horarios y mejorar tus horas de descanso. Considera delegar tareas si es posible.</p>
+            <p style="margin-top:8px;">💡 Intenta equilibrar tus horarios y mejorar tus horas de descanso. Considera delegar tareas si es posible.</p>
         `;
         b.appendChild(alertaDiv);
     } else if (nivelCargaActual > 0) {
@@ -841,18 +969,17 @@ function renderBitacora() {
                 <strong><i class="fas fa-check-circle"></i> ✅ ESTADO ACADÉMICO ESTABLE</strong>
                 <span style="font-size:0.8rem;">${new Date().toLocaleDateString()}</span>
             </div>
-            <p style="margin-top:8px;">📊 Nivel de carga: <strong>${nivelCargaActual}%</strong> - Excelente equilibrio académico.</p>
+            <p style="margin-top:8px;">📊 Excelente equilibrio académico.</p>
             <p>🌟 Mantén tus hábitos actuales y sigue así. ¡Vas por buen camino!</p>
         `;
         b.appendChild(alertaDiv);
     }
     
     const ahora = new Date();
-    const diaActual = ahora.toLocaleDateString('es-ES', { weekday: 'long' });
-    const diaCapitalizado = diaActual.charAt(0).toUpperCase() + diaActual.slice(1);
-    
-    const clasesHoy = materias.filter(m => m.d === diaCapitalizado);
-    
+    const hoyISO = getLocalDateString();
+
+    const clasesHoy = materias.filter(m => esFechaISO(m.d) && m.d === hoyISO);
+
     if (clasesHoy.length > 0) {
         clasesHoy.forEach(m => {
             const { estado, mensaje, color } = obtenerEstadoClase(m);
@@ -861,7 +988,7 @@ function renderBitacora() {
             claseDiv.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong><i class="fas fa-chalkboard-user"></i> ${m.n}</strong>
-                    <span style="font-size:0.8rem;">${m.d} • ${m.horaInicio} - ${m.horaFin}</span>
+                    <span style="font-size:0.8rem;">${formatearFechaCorta(m.d)} • ${m.horaInicio} - ${m.horaFin}</span>
                 </div>
                 <p style="margin-top:8px;"><strong>${mensaje}</strong></p>
                 <p style="margin-top:5px; font-size:0.9rem;">📍 Aula asignada: Principal • Duración: ${m.duracion} horas académicas</p>
@@ -882,15 +1009,18 @@ function renderBitacora() {
         b.appendChild(noClaseDiv);
     }
     
+    const ahoraMs = ahora.getTime();
     const proximasClases = materias.filter(m => {
-        const diasSemana = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5 };
-        const diaClaseNum = diasSemana[m.d];
-        const diaActualNum = ahora.getDay();
+        if (!esFechaISO(m.d)) return false;
         const [horaInicioTime, horaInicioPeriod = 'AM'] = m.horaInicio.split(' ');
         const { hour: horaInicioH, minute: minutoInicio } = parse12HourTime(horaInicioTime, horaInicioPeriod);
-        const horaClaseNum = horaInicioH + (minutoInicio / 60);
-        const horaActualNum = ahora.getHours() + (ahora.getMinutes() / 60);
-        return diaClaseNum > diaActualNum || (diaClaseNum === diaActualNum && horaClaseNum > horaActualNum);
+        const [y, mo, dd] = m.d.split('-').map(Number);
+        const inicioMs = new Date(y, mo - 1, dd, horaInicioH, minutoInicio, 0).getTime();
+        return inicioMs > ahoraMs;
+    }).sort((a, b) => {
+        const fa = new Date(a.d + 'T00:00:00').getTime();
+        const fb = new Date(b.d + 'T00:00:00').getTime();
+        return fa - fb;
     }).slice(0, 3);
     
     if (proximasClases.length > 0) {
@@ -899,10 +1029,92 @@ function renderBitacora() {
         proximasDiv.style.background = "#f0f9ff";
         proximasDiv.innerHTML = `
             <strong><i class="fas fa-clock"></i> 📋 PRÓXIMAS ACTIVIDADES</strong>
-            ${proximasClases.map(m => `<p style="margin-top:8px; margin-left:10px;">• ${m.n} - ${m.d} de ${m.horaInicio} a ${m.horaFin}</p>`).join('')}
+            ${proximasClases.map(m => `<p style="margin-top:8px; margin-left:10px;">• ${m.n} - ${formatearFechaCorta(m.d)} de ${m.horaInicio} a ${m.horaFin}</p>`).join('')}
             <p style="margin-top:8px; font-size:0.85rem; color:#475569;">✅ Recuerda preparar el material con anticipación.</p>
         `;
         b.appendChild(proximasDiv);
+    }
+
+    appendLogsBitacora(b);
+}
+
+window.renderBitacora = renderBitacora;
+
+function renderCanceladas() {
+    const data = loadCanceladas();
+    const aca = data.academicas || [];
+    const adm = data.administrativas || [];
+
+    const cont = document.getElementById('canceladas-container');
+    if (!cont) return;
+
+    if (aca.length === 0 && adm.length === 0) {
+        cont.innerHTML = `<p style="color:#94a3b8; font-style:italic; padding:10px 0; font-size:0.9rem;">Sin actividades canceladas todavía.</p>`;
+        return;
+    }
+
+    let html = '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px;">';
+
+    html += `
+        <div>
+            <h3 style="margin:0 0 10px 0; font-size:0.95rem; color:#475569;"><i class="fas fa-chalkboard-user" style="color:#2563eb;"></i> Académicas (${aca.length})</h3>
+            ${aca.length === 0 ? `<p style="color:#94a3b8; font-style:italic; font-size:0.85rem;">Sin cancelaciones académicas.</p>` : aca.map(c => `
+                <div style="background:#fef2f2; border-left:4px solid #ef4444; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.85rem;">
+                    <div style="font-weight:700; color:#1e293b;">${c.nombre || ''} ${c.seccion ? '· ' + c.seccion : ''} ${c.tipo ? '· ' + c.tipo : ''}</div>
+                    <div style="color:#475569; margin-top:3px;">📅 ${esFechaISO(c.fecha) ? formatearFechaCorta(c.fecha) : c.fecha} · ${c.horaInicio} – ${c.horaFin} (${c.duracion}h)</div>
+                    <div style="color:#7f1d1d; margin-top:6px;"><strong>Motivo:</strong> ${c.motivo || '—'}</div>
+                    <div style="color:#94a3b8; font-size:0.72rem; margin-top:4px;">Cancelada el ${c.canceladaEn || '—'}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    html += `
+        <div>
+            <h3 style="margin:0 0 10px 0; font-size:0.95rem; color:#475569;"><i class="fas fa-briefcase" style="color:#0c4a6e;"></i> Administrativas (${adm.length})</h3>
+            ${adm.length === 0 ? `<p style="color:#94a3b8; font-style:italic; font-size:0.85rem;">Sin cancelaciones administrativas.</p>` : adm.map(c => `
+                <div style="background:#fef2f2; border-left:4px solid #ef4444; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.85rem;">
+                    <div style="font-weight:700; color:#1e293b;">Registro administrativo (${c.horas}h)</div>
+                    <div style="color:#475569; margin-top:3px;">📅 ${esFechaISO(c.fecha) ? formatearFechaCorta(c.fecha) : c.fecha} ${c.horaInicio && c.horaFin ? '· ' + c.horaInicio + ' – ' + c.horaFin : ''}</div>
+                    <div style="color:#7f1d1d; margin-top:6px;"><strong>Motivo:</strong> ${c.motivo || '—'}</div>
+                    <div style="color:#94a3b8; font-size:0.72rem; margin-top:4px;">Cancelada el ${c.canceladaEn || '—'}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    html += '</div>';
+    cont.innerHTML = html;
+}
+
+function appendLogsBitacora(contenedor) {
+    if (!contenedor) return;
+    try {
+        const user = JSON.parse(localStorage.getItem('current_user')) || {};
+        const email = (user.email || 'anon').toString().trim().toLowerCase();
+        const key = 'docente_bitacora_logs_fechas_' + email;
+        const todos = JSON.parse(localStorage.getItem(key)) || {};
+        const logs = todos[getLocalDateString()] || [];
+        if (logs.length === 0) return;
+
+        const div = document.createElement('div');
+        div.className = 'bitacora-item';
+        div.style.background = '#f8fafc';
+        div.style.borderLeft = '4px solid #64748b';
+        div.innerHTML = `
+            <strong><i class="fas fa-history"></i> 📜 ACTIVIDADES REGISTRADAS HOY</strong>
+            <div style="margin-top:10px; max-height:280px; overflow-y:auto;">
+                ${logs.map(l => `
+                    <div style="padding:6px 10px; border-bottom:1px solid #eef2f7; font-size:0.85rem;">
+                        <span style="color:#94a3b8; font-size:0.75rem;">${l.fecha}</span><br>
+                        ${l.texto}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        contenedor.appendChild(div);
+    } catch (e) {
+        console.error('appendLogsBitacora:', e);
     }
 }
 
@@ -911,15 +1123,393 @@ function render() {
     if(!t) return;
     t.innerHTML = '';
     
+    const mesActual = getMesActualISO();
     materias.forEach(m => {
-        t.innerHTML += `<tr><td style="padding:12px;"><strong>${m.n}</strong></td><td>${m.seccion || ''}</td><td>${m.tipo || ''}</td><td>${m.d || '---'}</td><td>${m.horaInicio}</td><td>${m.horaFin}</td><td>${m.duracion}h</td><td><button onclick="delMateria(${m.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button></td></tr>`;
+        const fechaTxt = esFechaISO(m.d) ? formatearFechaCorta(m.d) : (m.d || '---');
+        const horas = Number(m.duracion) || 0;
+        t.innerHTML += `<tr><td style="padding:12px;"><strong>${m.n}</strong></td><td>${m.seccion || ''}</td><td>${m.tipo || ''}</td><td>${fechaTxt}</td><td>${m.horaInicio}</td><td>${m.horaFin}</td><td>${horas}h</td><td><button onclick="cancelarMateria(${m.id})" title="Cancelar materia" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-ban"></i></button></td></tr>`;
     });
-    
-    const horasTotales = materias.reduce((total, m) => total + m.duracion, 0);
+
+    const horasAcademicasDelMes = materias.reduce((total, m) => {
+        if (esFechaISO(m.d) && m.d.startsWith(mesActual)) {
+            return total + (Number(m.duracion) || 0);
+        }
+        return total;
+    }, 0);
+
     document.getElementById('stat-m').textContent = materias.length;
-    document.getElementById('stat-h').textContent = horasTotales + "h";
-    
+    document.getElementById('stat-h').textContent = horasAcademicasDelMes + "h";
+
+    const horasAcademicasEl = document.getElementById('horas-academicas-val');
+    if (horasAcademicasEl) horasAcademicasEl.textContent = horasAcademicasDelMes + 'h';
+
+    const horasAdminEl = document.getElementById('horas-administrative-val');
+    if (horasAdminEl) horasAdminEl.textContent = totalHorasAdminDelMes() + 'h';
+
+    renderHorasAdminTabla();
+    renderCanceladas();
+    renderInasistencias();
+
+    if (typeof actualizarNombresMateriasOverview === 'function') {
+        actualizarNombresMateriasOverview();
+    }
+
     renderBitacora();
+}
+
+function esFechaISO(s) {
+    return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function formatearFechaCorta(fechaISO) {
+    if (!esFechaISO(fechaISO)) return fechaISO || '---';
+    const [y, m, d] = fechaISO.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function getSemanaKey(fechaISO) {
+    if (!esFechaISO(fechaISO)) return '';
+    const dt = new Date(fechaISO + 'T00:00:00');
+    const day = dt.getDay() || 7;
+    dt.setDate(dt.getDate() + 1 - day);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function getMesActualISO() {
+    const hoy = new Date();
+    return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function loadInasistencias() {
+    try {
+        const raw = localStorage.getItem(getUserKey('db_inasistencias'));
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveInasistencias(arr) {
+    localStorage.setItem(getUserKey('db_inasistencias'), JSON.stringify(arr));
+}
+
+async function registrarInasistencia() {
+    const fechaInput = document.getElementById('inasistencia-fecha');
+    const motivoInput = document.getElementById('inasistencia-motivo');
+    if (!fechaInput || !motivoInput) return;
+    const fecha = fechaInput.value;
+    const motivo = (motivoInput.value || '').trim();
+
+    if (!esFechaISO(fecha)) {
+        showAlert('Seleccioná una fecha válida.', 'warning');
+        return;
+    }
+    if (!motivo) {
+        showAlert('Indicá un motivo de la inasistencia.', 'warning');
+        return;
+    }
+
+    const lista = loadInasistencias();
+    if (lista.some(i => i.fecha === fecha)) {
+        showAlert('Ya hay una inasistencia registrada para esa fecha.', 'warning');
+        return;
+    }
+
+    // Cancelar automáticamente las materias del día
+    const materiasDelDia = materias.filter(m => m.d === fecha);
+    const idsCanceladas = [];
+    if (materiasDelDia.length > 0) {
+        const canceladas = loadCanceladas();
+        for (const materia of materiasDelDia) {
+            canceladas.academicas.unshift({
+                id: Date.now() + Math.random(),
+                nombre: materia.n,
+                seccion: materia.seccion,
+                tipo: materia.tipo,
+                fecha: materia.d,
+                horaInicio: materia.horaInicio,
+                horaFin: materia.horaFin,
+                duracion: materia.duracion,
+                motivo: `Inasistencia: ${motivo}`,
+                canceladaEn: timestampISO()
+            });
+            idsCanceladas.push(materia.id);
+            try { await deleteMateriaFromServer(materia.id); } catch (e) {
+                materias = materias.filter(x => x.id !== materia.id);
+                localStorage.setItem(getUserKey('db_materias'), JSON.stringify(materias));
+            }
+        }
+        saveCanceladas(canceladas);
+    }
+
+    lista.unshift({
+        id: Date.now(),
+        fecha,
+        motivo,
+        registradaEn: timestampISO(),
+        materiasCanceladas: materiasDelDia.length
+    });
+    saveInasistencias(lista);
+
+    // Persistir en BD (best-effort)
+    fetch('api_inasistencias.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha, motivo })
+    }).catch(err => console.warn('No se pudo persistir inasistencia en BD:', err));
+
+    if (typeof registrarAccionAutomatica === 'function') {
+        registrarAccionAutomatica(`Inasistencia: ${formatearFechaCorta(fecha)}. Motivo: ${motivo}. ${materiasDelDia.length > 0 ? `Se cancelaron ${materiasDelDia.length} materia(s) de ese día.` : ''}`);
+    }
+    showAlert('Inasistencia registrada.', 'success');
+
+    fechaInput.value = '';
+    motivoInput.value = '';
+    cerrarModalInasistencia();
+    render();
+}
+
+function abrirModalInasistencia() {
+    const modal = document.getElementById('modalInasistencia');
+    if (modal) modal.style.display = 'flex';
+}
+
+function cerrarModalInasistencia() {
+    const modal = document.getElementById('modalInasistencia');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderInasistencias() {
+    const lista = loadInasistencias();
+    const statInasistencias = document.getElementById('stat-inasistencias');
+    const statDetalle = document.getElementById('stat-inasistencias-detalle');
+    if (statInasistencias) statInasistencias.textContent = lista.length;
+    if (statDetalle) {
+        statDetalle.textContent = lista.length === 0
+            ? 'Sin inasistencias registradas'
+            : `Última: ${formatearFechaCorta(lista[0].fecha)}`;
+    }
+
+    const cont = document.getElementById('inasistencias-container');
+    if (!cont) return;
+
+    if (lista.length === 0) {
+        cont.innerHTML = `<p style="color:#94a3b8; font-style:italic; padding:10px 0; font-size:0.9rem;">No hay inasistencias registradas.</p>`;
+        return;
+    }
+
+    cont.innerHTML = lista.map(i => `
+        <div style="background:#fef2f2; border-left:4px solid #ef4444; border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:0.88rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                <strong style="color:#1e293b;">📅 ${formatearFechaCorta(i.fecha)}</strong>
+                <span style="font-size:0.72rem; color:#94a3b8;">Registrada el ${i.registradaEn || '—'}</span>
+            </div>
+            <div style="color:#7f1d1d; margin-top:6px;"><strong>Motivo:</strong> ${i.motivo}</div>
+            ${i.materiasCanceladas > 0 ? `<div style="color:#64748b; font-size:0.78rem; margin-top:4px;">Se cancelaron ${i.materiasCanceladas} materia(s) de ese día.</div>` : ''}
+        </div>
+    `).join('');
+}
+
+function loadCanceladas() {
+    try {
+        const raw = localStorage.getItem(getUserKey('db_canceladas'));
+        const obj = raw ? JSON.parse(raw) : null;
+        return {
+            academicas: Array.isArray(obj?.academicas) ? obj.academicas : [],
+            administrativas: Array.isArray(obj?.administrativas) ? obj.administrativas : []
+        };
+    } catch (e) {
+        return { academicas: [], administrativas: [] };
+    }
+}
+
+function saveCanceladas(data) {
+    localStorage.setItem(getUserKey('db_canceladas'), JSON.stringify(data));
+}
+
+function timestampISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+}
+
+function loadHorasAdmin() {
+    try {
+        const raw = localStorage.getItem(getUserKey('db_horas_admin'));
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveHorasAdminArray(arr) {
+    localStorage.setItem(getUserKey('db_horas_admin'), JSON.stringify(arr));
+}
+
+function totalHorasAdminDelMes() {
+    const mes = getMesActualISO();
+    return loadHorasAdmin().reduce((acc, e) => {
+        return (typeof e.fecha === 'string' && e.fecha.startsWith(mes)) ? acc + (Number(e.horas) || 0) : acc;
+    }, 0);
+}
+
+function agregarHoraAdmin() {
+    const fechaInput = document.getElementById('m-admin-fecha');
+    const horaInicioEl = document.getElementById('m-admin-hora-inicio');
+    const inicioAmpmEl = document.getElementById('m-admin-inicio-ampm');
+    const horaFinEl = document.getElementById('m-admin-hora-fin');
+    const finAmpmEl = document.getElementById('m-admin-fin-ampm');
+    if (!fechaInput || !horaInicioEl || !horaFinEl) return;
+
+    const fecha = fechaInput.value;
+    const horaInicioVal = horaInicioEl.value;
+    const horaFinVal = horaFinEl.value;
+    const inicioAmpm = inicioAmpmEl.value;
+    const finAmpm = finAmpmEl.value;
+
+    if (!esFechaISO(fecha)) {
+        showAlert('Seleccioná una fecha válida.', 'warning');
+        return;
+    }
+    if (!horaInicioVal || !horaFinVal) {
+        showAlert('Seleccioná hora de inicio y fin.', 'warning');
+        return;
+    }
+
+    const inicio = parse12HourTime(horaInicioVal, inicioAmpm);
+    const fin = parse12HourTime(horaFinVal, finAmpm);
+    const inicioMinutos = inicio.hour * 60 + inicio.minute;
+    const finMinutos = fin.hour * 60 + fin.minute;
+    let duracion = (finMinutos - inicioMinutos) / 60;
+
+    if (duracion <= 0) {
+        showAlert('La hora de fin debe ser posterior a la de inicio.', 'error');
+        return;
+    }
+    duracion = Math.round(duracion * 4) / 4;
+
+    if (duracion > 2) {
+        showAlert('Una entrada administrativa no puede superar 2 hs.', 'error');
+        return;
+    }
+
+    const lista = loadHorasAdmin();
+    const semanaNueva = getSemanaKey(fecha);
+    const horasEnSemana = lista.reduce((total, e) => {
+        return getSemanaKey(e.fecha) === semanaNueva ? total + (Number(e.horas) || 0) : total;
+    }, 0);
+    if (horasEnSemana + duracion > 2) {
+        showAlert(`Límite excedido: máximo 2 hs administrativas por semana. Esa semana ya tenés ${horasEnSemana}h.`, 'error');
+        return;
+    }
+
+    const conflicto = lista.some(e => {
+        if (e.fecha !== fecha || !e.horaInicio || !e.horaFin) return false;
+        const eIni = parse12HourTime(e.horaInicio.split(' ')[0], e.horaInicio.split(' ')[1]);
+        const eFin = parse12HourTime(e.horaFin.split(' ')[0], e.horaFin.split(' ')[1]);
+        const iniE = eIni.hour * 60 + eIni.minute;
+        const finE = eFin.hour * 60 + eFin.minute;
+        return inicioMinutos < finE && finMinutos > iniE;
+    });
+    if (conflicto) {
+        showAlert('Conflicto: ya tenés una entrada administrativa que se superpone en ese horario.', 'error');
+        return;
+    }
+
+    lista.push({
+        id: Date.now(),
+        fecha,
+        horaInicio: inicio.display,
+        horaFin: fin.display,
+        horas: duracion
+    });
+    saveHorasAdminArray(lista);
+    registrarAccionAutomatica(`Carga Administrativa: ${duracion}h registradas para el ${formatearFechaCorta(fecha)} de ${inicio.display} a ${fin.display}.`);
+    showAlert('Registro administrativo agregado.', 'success');
+
+    fechaInput.value = '';
+    horaInicioEl.selectedIndex = 0;
+    horaFinEl.selectedIndex = 0;
+    inicioAmpmEl.value = 'AM';
+    finAmpmEl.value = 'AM';
+    renderHorasAdminTabla();
+
+    const horasAdminEl = document.getElementById('horas-administrative-val');
+    if (horasAdminEl) horasAdminEl.textContent = totalHorasAdminDelMes() + 'h';
+}
+
+function cancelarHoraAdmin(id) {
+    const lista = loadHorasAdmin();
+    const entry = lista.find(e => e.id === id);
+    if (!entry) return;
+
+    const horario = (entry.horaInicio && entry.horaFin) ? `${entry.horaInicio} - ${entry.horaFin}` : `${entry.horas}h`;
+    const motivo = prompt(`Motivo de cancelación del registro administrativo del ${formatearFechaCorta(entry.fecha)} (${horario}):`);
+    if (motivo === null) return;
+    const motivoTrim = motivo.trim();
+    if (!motivoTrim) {
+        showAlert('Debés indicar un motivo para cancelar.', 'warning');
+        return;
+    }
+
+    const canceladas = loadCanceladas();
+    canceladas.administrativas.unshift({
+        id: Date.now(),
+        fecha: entry.fecha,
+        horaInicio: entry.horaInicio || '',
+        horaFin: entry.horaFin || '',
+        horas: entry.horas,
+        motivo: motivoTrim,
+        canceladaEn: timestampISO()
+    });
+    saveCanceladas(canceladas);
+
+    const nueva = lista.filter(e => e.id !== id);
+    saveHorasAdminArray(nueva);
+    renderHorasAdminTabla();
+    const horasAdminEl = document.getElementById('horas-administrative-val');
+    if (horasAdminEl) horasAdminEl.textContent = totalHorasAdminDelMes() + 'h';
+
+    if (typeof registrarAccionAutomatica === 'function') {
+        registrarAccionAutomatica(`Carga Administrativa: Se canceló el registro del ${formatearFechaCorta(entry.fecha)} (${entry.horas}h). Motivo: ${motivoTrim}.`);
+    }
+    showAlert('Registro administrativo cancelado.', 'info');
+    if (typeof renderCanceladas === 'function') renderCanceladas();
+}
+
+function eliminarHoraAdmin(id) { return cancelarHoraAdmin(id); }
+
+function renderHorasAdminTabla() {
+    const tbody = document.getElementById('tabla-admin');
+    if (!tbody) return;
+    const lista = loadHorasAdmin().slice().sort((a, b) => (a.fecha > b.fecha ? 1 : -1));
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 10px; text-align: center; color: #64748b; font-style: italic;">Sin entradas administrativas cargadas.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = lista.map(e => {
+        const horario = (e.horaInicio && e.horaFin) ? `${e.horaInicio} - ${e.horaFin}` : '—';
+        return `
+            <tr style="border-top: 1px solid #e2e8f0;">
+                <td style="padding: 8px;">${formatearFechaCorta(e.fecha)}</td>
+                <td style="padding: 8px;">${horario}</td>
+                <td style="padding: 8px;">${e.horas}h</td>
+                <td style="padding: 8px; text-align: right;">
+                    <button onclick="cancelarHoraAdmin(${e.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;" title="Cancelar"><i class="fas fa-ban"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // ==================== NAVEGACIÓN ====================
@@ -941,7 +1531,46 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if(this.dataset.target === 'bitacora') {
             renderBitacora();
         }
+
+        if(this.dataset.target === 'bienestar') {
+            if (window.Mensajeria) window.Mensajeria.refrescarSoloBadge();
+        }
+
+        if(this.dataset.target === 'materias') {
+            if (typeof window.establecerSemanaFechaActualSilencioso === 'function') {
+                window.establecerSemanaFechaActualSilencioso();
+            }
+        }
     };
+});
+
+if (window.Mensajeria) {
+    window.Mensajeria.refrescarSoloBadge();
+    setInterval(() => { if (window.Mensajeria) window.Mensajeria.refrescarSoloBadge(); }, 30000);
+}
+
+document.querySelectorAll('.bloque-colapsable .colapsable-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const bloque = header.closest('.bloque-colapsable');
+        const yaAbierto = bloque.classList.contains('abierto');
+        bloque.classList.toggle('abierto');
+
+        if (!yaAbierto) {
+            const tipo = bloque.dataset.bloque;
+            if (tipo === 'ficha-medica' && window.MiFicha) {
+                window.MiFicha.init('mi-ficha-container');
+            } else if (tipo === 'ficha-emocional' && window.MiFichaEmocional) {
+                window.MiFichaEmocional.init('mi-ficha-emo-container');
+            } else if (tipo === 'mensajes' && window.Mensajeria) {
+                if (!window._mensajeriaIniciada) {
+                    window.Mensajeria.init('mensajeria-container');
+                    window._mensajeriaIniciada = true;
+                } else {
+                    window.Mensajeria.refrescarSoloBadge();
+                }
+            }
+        }
+    });
 });
 
 // ==================== CONSULTAS ====================

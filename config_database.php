@@ -45,9 +45,15 @@ function ensureUsuariosTable(mysqli $conn) {
         `profile_pic` TEXT DEFAULT NULL,
         `especialidad` VARCHAR(100) DEFAULT NULL,
         `bio` TEXT DEFAULT NULL,
+        `horario_url` TEXT DEFAULT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
+
+    $check = $conn->query("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'horario_url'");
+    if ($check && ($row = $check->fetch_assoc()) && (int)$row['c'] === 0) {
+        $conn->query("ALTER TABLE `usuarios` ADD COLUMN `horario_url` TEXT DEFAULT NULL");
+    }
 }
 
 function ensureBienestarTable(mysqli $conn) {
@@ -86,6 +92,17 @@ function ensureEncuestaTable(mysqli $conn) {
 }
 
 function ensureMateriasTable(mysqli $conn) {
+    $tableExists = $conn->query("SELECT COUNT(*) AS c FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'materias'");
+    $hasTable = $tableExists && ($r = $tableExists->fetch_assoc()) && (int)$r['c'] > 0;
+
+    if ($hasTable) {
+        $colCheck = $conn->query("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'materias' AND COLUMN_NAME = 'usuario_id'");
+        $hasUsuarioId = $colCheck && ($r2 = $colCheck->fetch_assoc()) && (int)$r2['c'] > 0;
+        if (!$hasUsuarioId) {
+            $conn->query("DROP TABLE `materias`");
+        }
+    }
+
     $sql = "CREATE TABLE IF NOT EXISTS `materias` (
         `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         `usuario_id` INT UNSIGNED DEFAULT NULL,
@@ -101,6 +118,118 @@ function ensureMateriasTable(mysqli $conn) {
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY `unique_materia_usuario` (`email`, `nombre`, `seccion`, `tipo`, `dia`, `hora_inicio`, `hora_fin`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureFichaMedicaTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `ficha_medica` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `profesor_email` VARCHAR(255) NOT NULL UNIQUE,
+        `tipo_sangre` VARCHAR(5) DEFAULT NULL,
+        `alergias` TEXT DEFAULT NULL,
+        `enfermedades_cronicas` TEXT DEFAULT NULL,
+        `medicacion_actual` TEXT DEFAULT NULL,
+        `peso` DECIMAL(5,2) DEFAULT NULL,
+        `altura` DECIMAL(4,2) DEFAULT NULL,
+        `presion_arterial` VARCHAR(20) DEFAULT NULL,
+        `frecuencia_cardiaca` INT DEFAULT NULL,
+        `contacto_nombre` VARCHAR(150) DEFAULT NULL,
+        `contacto_telefono` VARCHAR(50) DEFAULT NULL,
+        `contacto_relacion` VARCHAR(50) DEFAULT NULL,
+        `observaciones` TEXT DEFAULT NULL,
+        `ultima_consulta` DATE DEFAULT NULL,
+        `updated_by_email` VARCHAR(255) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureFichaVisitasTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `ficha_visitas` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `profesor_email` VARCHAR(255) NOT NULL,
+        `fecha` DATE NOT NULL,
+        `motivo` VARCHAR(255) DEFAULT NULL,
+        `notas` TEXT DEFAULT NULL,
+        `created_by_email` VARCHAR(255) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX `idx_profesor` (`profesor_email`, `fecha`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureBitacoraActividadesTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `bitacora_actividades` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `usuario_email` VARCHAR(255) NOT NULL,
+        `descripcion` TEXT NOT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX `idx_email_fecha` (`usuario_email`, `created_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureInasistenciasTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `inasistencias` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `profesor_email` VARCHAR(255) NOT NULL,
+        `fecha` DATE NOT NULL,
+        `motivo` TEXT DEFAULT NULL,
+        `registrada_por_email` VARCHAR(255) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY `unique_inasistencia` (`profesor_email`, `fecha`),
+        INDEX `idx_profesor` (`profesor_email`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureFichaEmocionalTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `ficha_emocional` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `profesor_email` VARCHAR(255) NOT NULL UNIQUE,
+        `estado_emocional` VARCHAR(100) DEFAULT NULL,
+        `antecedentes` TEXT DEFAULT NULL,
+        `tipo_terapia` VARCHAR(150) DEFAULT NULL,
+        `medicacion_psiquiatrica` TEXT DEFAULT NULL,
+        `factores_estres` TEXT DEFAULT NULL,
+        `red_apoyo` TEXT DEFAULT NULL,
+        `observaciones` TEXT DEFAULT NULL,
+        `ultima_sesion` DATE DEFAULT NULL,
+        `proxima_sesion` DATE DEFAULT NULL,
+        `updated_by_email` VARCHAR(255) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureFichaSesionesTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `ficha_sesiones` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `profesor_email` VARCHAR(255) NOT NULL,
+        `fecha` DATE NOT NULL,
+        `motivo` VARCHAR(255) DEFAULT NULL,
+        `notas` TEXT DEFAULT NULL,
+        `created_by_email` VARCHAR(255) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX `idx_profesor_sesion` (`profesor_email`, `fecha`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function ensureMensajesTable(mysqli $conn) {
+    $sql = "CREATE TABLE IF NOT EXISTS `mensajes` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `remitente_email` VARCHAR(255) NOT NULL,
+        `destinatario_email` VARCHAR(255) NOT NULL,
+        `contenido` TEXT NOT NULL,
+        `fecha` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `leido` TINYINT(1) NOT NULL DEFAULT 0,
+        INDEX `idx_remitente` (`remitente_email`),
+        INDEX `idx_destinatario` (`destinatario_email`),
+        INDEX `idx_conv` (`remitente_email`, `destinatario_email`, `fecha`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
 }

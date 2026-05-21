@@ -27,7 +27,7 @@ $password = $data['password'];
 $conn = getConnection();
 ensureUsuariosTable($conn);
 
-$stmt = $conn->prepare("SELECT id, first_name, last_name, email, password, cedula, phone, especialidad, bio, profile_pic, cv_url, role FROM usuarios WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, first_name, last_name, email, password, cedula, phone, especialidad, bio, profile_pic, cv_url, horario_url, role FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -57,7 +57,9 @@ $normalizedUser = [
     'bio' => $user['bio'] ?? '',
     'profilePic' => $user['profile_pic'] ?? $user['profilePic'] ?? '',
     'cvUrl' => $user['cv_url'] ?? null,
-    'cvName' => $user['cv_url'] ? basename($user['cv_url']) : null
+    'cvName' => $user['cv_url'] ? basename($user['cv_url']) : null,
+    'horarioUrl' => $user['horario_url'] ?? null,
+    'role' => $user['role'] ?? 'user'
 ];
 
 // Iniciar sesión
@@ -66,6 +68,8 @@ $_SESSION['user_id'] = $normalizedUser['id'];
 $_SESSION['user_email'] = $normalizedUser['email'];
 $_SESSION['user_cedula'] = $user['cedula'] ?? '';
 $_SESSION['user_role'] = $user['role'] ?? 'teacher';
+$_SESSION['user_first_name'] = $normalizedUser['firstName'];
+$_SESSION['user_last_name'] = $normalizedUser['lastName'];
 
 sendJsonResponse([
     'success' => true,

@@ -24,7 +24,7 @@ if (!$userId && !$email) {
     exit;
 }
 
-$sql = 'SELECT id, first_name, last_name, email, cedula, phone, especialidad, bio, profile_pic, cv_url FROM usuarios WHERE ' . ($userId ? 'id = ?' : 'email = ?');
+$sql = 'SELECT id, first_name, last_name, email, cedula, phone, especialidad, bio, profile_pic, cv_url, horario_url FROM usuarios WHERE ' . ($userId ? 'id = ?' : 'email = ?');
 $stmt = $conn->prepare($sql);
 if ($userId) {
     $stmt->bind_param('i', $userId);
@@ -53,7 +53,8 @@ $normalizedUser = [
     'especialidad' => $user['especialidad'] ?? '',
     'bio' => $user['bio'] ?? '',
     'profilePic' => $user['profile_pic'] ?? '',
-    'cvUrl' => $user['cv_url'] ?? null
+    'cvUrl' => $user['cv_url'] ?? null,
+    'horarioUrl' => $user['horario_url'] ?? null
 ];
 
 http_response_code(200);

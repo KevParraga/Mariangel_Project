@@ -1,0 +1,66 @@
+.ficha-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    height: 650px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
+}
+@media (max-width: 700px) {
+    .ficha-layout { grid-template-columns: 1fr; height: auto; }
+}
+
+.ficha-sidebar { background: #f8fafc; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; }
+.ficha-sidebar-head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
+.ficha-sidebar-head input { width: 100%; margin-top: 8px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; }
+.ficha-lista { flex: 1; overflow-y: auto; }
+.ficha-item {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 14px; cursor: pointer;
+    border-bottom: 1px solid #eef2f7;
+    transition: background 0.15s;
+}
+.ficha-item:hover { background: #eef2f7; }
+.ficha-item.active { background: #dbeafe; }
+.ficha-item img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.ficha-item .nombre { font-weight: 600; font-size: 0.88rem; color: #1e293b; }
+.ficha-item .esp { font-size: 0.72rem; color: #64748b; }
+
+.ficha-panel { padding: 20px; overflow-y: auto; }
+.ficha-empty { text-align: center; color: #94a3b8; padding: 60px 20px; }
+.ficha-empty i { font-size: 2.5rem; display: block; margin-bottom: 10px; color: #cbd5e1; }
+
+.ficha-section-title { font-size: 0.85rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 8px 0; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }
+.ficha-section-title:first-child { margin-top: 0; }
+
+.ficha-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.ficha-field { display: flex; flex-direction: column; gap: 4px; }
+.ficha-field label { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+.ficha-field input, .ficha-field select, .ficha-field textarea {
+    padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
+    font-family: inherit; font-size: 0.88rem; background: white;
+}
+.ficha-field textarea { resize: vertical; min-height: 60px; }
+.ficha-field input:read-only, .ficha-field textarea:read-only { background: #f8fafc; cursor: default; }
+
+.ficha-actions { margin-top: 18px; display: flex; gap: 10px; justify-content: flex-end; }
+
+.visitas-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.visita-item {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 12px; font-size: 0.85rem;
+}
+.visita-item .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.visita-item .fecha { font-weight: 700; color: #1e293b; }
+.visita-item .motivo { color: #475569; font-style: italic; }
+.visita-item .notas { color: #334155; white-space: pre-wrap; }
+.visita-item .meta { font-size: 0.72rem; color: #94a3b8; margin-top: 4px; }
+.visita-item button.del {
+    background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem;
+}
+
+.visita-form { display: grid; grid-template-columns: 140px 1fr auto; gap: 8px; margin-top: 10px; }
+.visita-form textarea { grid-column: 1 / -1; }
