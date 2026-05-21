@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Docente - EcoAcademia</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Css/Login.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 style="font-weight: 800; color: #0f172a; letter-spacing: -1px;">Área Docente</h2>
+                <p style="color: #64748b; font-size: 0.9rem;">Gestión académica y bienestar</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Acceder</button>
+                <button class="tab-btn" data-tab="recover">Recuperar</button>
+            </div>
+
+            <form id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <label for="loginEmail"><i class="fas fa-envelope"></i> Correo Institucional</label>
+                    <input type="email" id="loginEmail" required placeholder="nombre@ejemplo.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+<!-- AÑADE ESTA LÍNEA AQUÍ -->
+<span id="loginPasswordError" style="color: #ef4444; font-size: 0.8rem; display: none; margin-bottom: 10px;"></span>
+                <div style="margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;">
+                    <input type="checkbox" id="acceptTerms" required style="width: 18px; height: 18px; cursor: pointer; accent-color: #2563eb; margin-top: 2px;">
+                    <label for="acceptTerms" style="font-size: 0.85rem; color: #475569; cursor: pointer; line-height: 1.4;">
+                        He leído y acepto los <a href="terminos.html" target="_blank" style="color: #2563eb; font-weight: 600; text-decoration: none;">Términos y Condiciones</a> de gestión académica.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <span>Iniciar Sesión</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <form id="recoverForm" class="auth-form">
+                <div class="form-group">
+                    <label for="recoverEmail"><i class="fas fa-envelope"></i> Correo Registrado</label>
+                    <input type="email" id="recoverEmail" required placeholder="Tu correo electrónico">
+                    <span class="error-message" id="recoverEmailError"></span>
+                </div>
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Restablecer acceso</span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>¿No tienes cuenta? <a href="Registro.html">Solicitar registro</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/Login.js"></script>
+    <script src="js/recuperar.js"></script>
+</body>
+</html>

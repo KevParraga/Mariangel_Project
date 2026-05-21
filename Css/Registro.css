@@ -1,0 +1,454 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #1a7e5c;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #475666;
+            --gray-900: #0f172a;
+            --white: #ffffff;
+            --gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #134ECD 0%, #452763 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--gray-900);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-header i {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .auth-header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-header p {
+            color: var(--gray-500);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-900);
+            font-size: 0.95rem;
+        }
+
+        label i {
+            margin-right: 0.5rem;
+            color: var(--primary);
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--gray-100);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        input.error {
+            border-color: var(--error) !important;
+            background: #fef2f2;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+        }
+
+        input.success {
+            border-color: var(--success) !important;
+            background: #f0fdf4;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+            min-height: 1.25rem;
+            font-weight: 500;
+        }
+
+        .success-message {
+            color: var(--success);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+            min-height: 1.25rem;
+            font-weight: 500;
+        }
+
+        /* Subida de Foto de Perfil */
+        .profile-upload {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .profile-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--gray-100);
+            background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .profile-preview:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .profile-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .profile-preview i {
+            font-size: 2rem;
+            color: var(--gray-500);
+        }
+
+        /* Seguridad de la Contraseña */
+        .password-strength {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--gray-200);
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .strength-bar {
+            height: 100%;
+            transition: all 0.4s ease;
+            border-radius: 3px;
+        }
+
+        .strength-weak { background: var(--error); width: 25%; }
+        .strength-fair { background: var(--warning); width: 50%; }
+        .strength-good { background: var(--success); width: 75%; }
+        .strength-strong { background: var(--success); width: 100%; }
+
+        /* Casilla de Verificación (Checkbox) */
+        .checkbox-group {
+            margin: 1.5rem 0;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--gray-300);
+            border-radius: 6px;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            margin-top: 1px;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.25rem 2rem;
+            border-radius: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-sm {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            font-size: 1.1rem;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Pie de Página de Autenticación */
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .auth-footer p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animación de Carga */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading .btn-text {
+            opacity: 0;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Diseño Responsivo */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 2rem;
+                margin: 10px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .auth-header h1 {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* --- Base para que el contenedor sea flexible --- */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px; /* Espacio para que la tarjeta no pegue de los bordes del tlf */
+    background: #f4f7f6;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 550px; /* Ancho máximo en PC */
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* --- REGLAS PARA CELULARES (Pantallas menores a 768px) --- */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 1.5rem; /* Reducimos el padding interno */
+        border-radius: 12px;
+    }
+
+    /* Hacemos que las filas de dos columnas (Nombres/Apellidos) 
+       se conviertan en una sola columna en el móvil */
+    .form-row {
+        display: flex;
+        flex-direction: column; 
+        gap: 0; /* Quitamos el espacio lateral */
+    }
+
+    .form-row .form-group {
+        width: 100%; /* Cada input ocupa todo el ancho */
+        margin-bottom: 1rem;
+    }
+
+    h1 {
+        font-size: 1.5rem; /* Texto un poco más pequeño para que no salte de línea */
+    }
+
+    .btn-full {
+        padding: 14px; /* Botón más grande para que sea fácil de tocar con el dedo */
+        font-size: 1rem;
+    }
+
+    /* Ajuste para la foto de perfil en móvil */
+    .profile-upload {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+    }
+}

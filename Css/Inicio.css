@@ -1,0 +1,306 @@
+ /* RESETEO GLOBAL: Quita los márgenes por defecto y hace que el cálculo de tamaños (box-sizing) sea exacto */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* VARIABLES CSS (:root): Centraliza los colores principales para cambiarlos fácilmente en todo el sitio */
+        :root {
+            --primary: #1147BB;       /* Azul principal */
+            --primary-dark: #1e40af;  /* Azul oscuro para efectos hover */
+            --accent: #084AB4;        /* Azul brillante de acento */
+            --success: #076445;       /* Verde para éxitos/analíticas */
+            --medical: #AE0F0F;       /* Rojo para la sección de salud */
+            --bg-glass: rgba(255, 255, 255, 0.8); /* Blanco translúcido para el efecto vidrio */
+            --text-main: #1e293b;     /* Color del texto principal (Gris casi negro) */
+            --text-muted: #4B5768;    /* Color para textos secundarios (Gris suave) */
+        }
+
+        /* CUERPO DE LA PÁGINA: Define la fuente, color de fondo y añade dos gradientes sutiles en las esquinas */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
+            overflow-x: hidden; /* Evita el desplazamiento horizontal no deseado */
+        }
+
+        /* CONTENEDOR: Centra el contenido y le da un ancho máximo limpio en pantallas grandes */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* CABECERA (HEADER): Diseño flotante tipo "cápsula moderna" con efecto de desenfoque de fondo (backdrop-filter) */
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1100px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.5rem 1rem;
+        }
+
+        /* CLASE SCROLLED: Se activa con JavaScript cuando el usuario baja la página, pegando la cabecera al techo */
+        .header.scrolled {
+            top: 0;
+            width: 100%;
+            max-width: 100%;
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        /* BARRA DE NAVEGACIÓN: Alinea el logotipo a la izquierda y el menú a la derecha */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        /* LOGOTIPO: Estilos de la marca EcoAcademia */
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        /* CONTENEDOR DEL MENÚ: Espaciado entre los enlaces de navegación */
+        .nav-menu { display: flex; align-items: center; gap: 2.5rem; }
+
+        /* ENLACES SIMPLES: Añaden una línea animada en la parte inferior cuando pasas el ratón encima (hover) */
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: var(--primary);
+            transition: 0.3s;
+        }
+
+        .nav-link:hover::after { width: 100%; }
+
+        /* BOTÓN HAMBURGUESA: Oculto en computadoras, se activa únicamente en pantallas móviles mediante CSS Media Queries */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        /* --- ESTILOS DE BOTONES BASE --- */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* BOTÓN AZUL (Sólido con sombra moderna) */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px); /* Eleva el botón sutilmente */
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.3);
+        }
+
+        /* BOTÓN CON BORDE (Transparente con delineado) */
+        .btn-outline {
+            border: 2px solid #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* --- SECCIÓN PRINCIPAL (HERO) --- */
+        .hero-section {
+            padding: 180px 0 100px;
+            text-align: left;
+        }
+
+        /* Cuadrícula que divide el texto (izquierda) y la imagen (derecha) en PC */
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 500px;
+        }
+
+        .hero-buttons { display: flex; gap: 15px; }
+
+        /* --- SECCIÓN MÉDICA Y SALUD --- */
+        .medical-section { padding: 100px 0; }
+        
+        /* Tarjeta blanca grande con bordes muy redondeados y rejilla interna de dos columnas */
+        .medical-card {
+            background: white;
+            border-radius: 40px;
+            padding: 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .medical-content h2 { font-size: 2.8rem; font-weight: 800; margin-bottom: 20px; }
+        
+        /* Pequeña etiqueta roja de "EXCLUSIVO DOCENTES" */
+        .medical-badge {
+            background: #fff1f2;
+            color: var(--medical);
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        /* --- SECCIÓN DE CARACTERÍSTICAS (FEATURES) --- */
+        /* Rejilla automática de 3 columnas para PC */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        /* Bloques individuales de características */
+        .feature-item {
+            background: white;
+            padding: 40px;
+            border-radius: 32px;
+            transition: 0.4s;
+            border: 1px solid transparent;
+        }
+
+        /* Efecto al pasar el ratón: se levanta y se pinta el borde de azul */
+        .feature-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+        }
+
+        /* Caja contenedora para los iconos redondos/cuadrados */
+        .icon-shape {
+            width: 60px;
+            height: 60px;
+            background: #eff6ff;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+        }
+
+        /* Sección de cierre en el fondo antes del footer */
+        .end-spacer { padding: 100px 0; text-align: center; }
+
+        /* --- RESPONSIVIDAD (MEDIA QUERY para pantallas menores a 992px) --- 
+           Este bloque reorganiza toda la web para que se vea perfecta en Teléfonos y Tablets */
+        @media (max-width: 992px) {
+            .container { padding: 0 20px; }
+
+            /* Muestra el botón hamburguesa */
+            .menu-toggle { display: block; }
+
+            /* Convierte el menú horizontal en un desplegable vertical absoluto debajo de la barra */
+            .nav-menu {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 30px 20px;
+                gap: 1.5rem;
+                border-radius: 0 0 24px 24px;
+                border-top: 1px solid rgba(0,0,0,0.05);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+                display: none; /* Se oculta por defecto en celular */
+            }
+
+            /* Clase que activa el JavaScript para mostrar el menú móvil */
+            .nav-menu.active { display: flex; }
+
+            .header.scrolled .nav-menu { border-radius: 0; }
+            .nav-menu .btn { width: 100%; } /* Los botones ocupan todo el ancho del celular */
+
+            /* Pasa las cuadrículas de PC (de 2 y 3 columnas) a 1 sola columna vertical */
+            .hero-section { padding: 140px 0 60px; }
+            .hero-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+            .hero-title { font-size: 2.4rem; letter-spacing: -1px; }
+            .hero-subtitle { margin: 0 auto 30px; font-size: 1.05rem; }
+            .hero-buttons { flex-direction: column; gap: 12px; width: 100%; }
+            .hero-buttons .btn { width: 100%; padding: 14px 20px !important; }
+
+            .medical-section { padding: 60px 0; }
+            .medical-card { grid-template-columns: 1fr; padding: 30px 20px; gap: 30px; border-radius: 24px; }
+            .medical-content h2 { font-size: 1.8rem; }
+            .medical-content { text-align: center; }
+            .medical-content div { align-items: center; justify-content: center; text-align: left; }
+
+            .features-grid { grid-template-columns: 1fr; gap: 20px; margin-top: 40px; }
+            .feature-item { padding: 30px 20px; border-radius: 24px; text-align: center; }
+            .icon-shape { margin: 0 auto 20px; }
+
+            .end-spacer { padding: 60px 0; }
+            .end-spacer h2 { font-size: 1.6rem; }
+            .end-spacer .btn { width: 100%; padding: 14px 20px !important; }
+        }

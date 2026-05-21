@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - EcoAcademia</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Css/Registro.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-user-plus"></i>
+                <h1>Crear Cuenta Docente</h1>
+                <p>Regístrate en menos de 2 minutos</p>
+            </div>
+            
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label>Foto de Perfil <span style="color: var(--gray-500); font-weight: 400;">(Opcional)</span></label>
+                    <div class="profile-upload">
+                        <div class="profile-preview" id="profilePreview" title="Haz clic en el botón de abajo para subir o cambiar tu foto de perfil">
+                            <i class="fas fa-user"></i>
+                            <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" id="changePhotoBtn" onclick="document.getElementById('profilePhoto').click()">
+                            <i class="fas fa-camera"></i> Cambiar Foto
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName"><i class="fas fa-user"></i> Nombres *</label>
+                        <!-- Ejemplo real de nombre -->
+                        <input type="text" id="firstName" placeholder="Ej: Pedro Miguel" required>
+                        <span class="error-message" id="firstNameError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName"><i class="fas fa-user"></i> Apellidos *</label>
+                        <!-- Ejemplo real de apellido -->
+                        <input type="text" id="lastName" placeholder="Ej: Briceño Rivas" required>
+                        <span class="error-message" id="lastNameError"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Correo Electrónico *</label>
+                    <!-- Ejemplo con dominio real admitido -->
+                    <input type="email" id="email" placeholder="ejemplo@gmail.com" required>
+                    <span class="error-message" id="emailError"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cedula"><i class="fas fa-id-card"></i> Cédula de Identidad *</label>
+                        <!-- Ejemplo de cédula venezolana estándar -->
+                        <input type="text" id="cedula" placeholder="Ej: 25123456" required>
+                        <span class="error-message" id="cedulaError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone"><i class="fas fa-phone"></i> Teléfono Móvil *</label>
+                        <!-- Ejemplo con formato venezolano 04xx -->
+                        <input type="tel" id="phone" placeholder="Ej: 04141234567" required>
+                        <span class="error-message" id="phoneError"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Contraseña *</label>
+                    <!-- El placeholder ahora advierte que debe ser fuerte -->
+                    <input type="password" id="password" placeholder="Ej: Profe2024*" required>
+                    <span class="error-message" id="passwordError"></span>
+                    <small style="color: #666; font-size: 0.75rem;">Debe incluir Mayúscula, número y símbolo (@$!%*?&).</small>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="terms" required>
+                        <span class="checkmark"></span>
+                        Acepto los <a href="terminos.html" style="color: var(--primary);">Términos y Condiciones</a> *
+                    </label>
+                    <span class="error-message" id="termsError"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" id="registerBtn">
+                    <span class="btn-text">Crear Mi Cuenta</span>
+                    <i class="fas fa-user-plus"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>¿Ya tienes cuenta? <a href="Login.html">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+    <script src="js/Registro.js"></script>
+</body>
+</html>

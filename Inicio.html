@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoAcademia - Plataforma Elite Docente</title>
+    <link rel="stylesheet" href="Css/Inicio.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <header class="header">
+        <nav class="navbar container">
+            <a href="#" class="nav-logo" title="Ir al inicio de EcoAcademia">
+                <i class="fas fa-shield-halved"></i>
+                <span>EcoAcademia</span>
+            </a>
+            
+            <button class="menu-toggle" id="mobile-menu-btn" aria-label="Abrir menú" title="Mostrar/ocultar menú de navegación">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="nav-menu" id="nav-menu-container">
+                <a href="#features" class="nav-link" title="Ver las herramientas y funciones principales">Ecosistema</a>
+                <a href="#medico" class="nav-link" title="Conocer el sistema de salud y bienestar integral">Salud</a>
+                <a href="Login.html" class="btn btn-outline" title="Iniciar sesión en tu panel privado de docente">Acceso Docente</a>
+                <a href="Registro.html" class="btn btn-primary" title="Crear una cuenta nueva y registrarte en la plataforma">Unirse ahora</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-grid">
+                <div>
+                    <h1 class="hero-title"> Ecosistema de Gestión Académica <br><span style="color: var(--primary)">y Bienestar Docente.</span></h1>
+                    <p class="hero-subtitle">Optimizamos tu flujo de trabajo educativo mientras priorizamos tu salud física y mental con herramientas de última generación.</p>
+                    <div class="hero-buttons">
+                        <a href="Registro.html" class="btn btn-primary" style="padding: 16px 32px;" title="Comenzar el registro gratuito y transformar tu labor educativa">Empezar mi transformación</a>
+                        <a href="#features" class="btn btn-outline" style="padding: 16px 32px;" title="Desplazarse hacia abajo para ver los módulos de automatización y analítica">Explorar funciones</a>
+                    </div>
+                </div>
+                <div style="position: relative;">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" alt="Docentes" style="width: 100%; height: auto; display: block; border-radius: 40px; box-shadow: 0 50px 100px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="medico" class="medical-section">
+        <div class="container">
+            <div class="medical-card">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80" alt="Salud" style="width: 100%; height: auto; display: block; border-radius: 30px;">
+                </div>
+                <div class="medical-content">
+                    <span class="medical-badge"><i class="fas fa-heartbeat"></i> EXCLUSIVO DOCENTES</span>
+                    <h2>Tu salud no es negociable.</h2>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">
+                        Hemos integrado un sistema de respuesta médica inmediata. Desde ergonomía digital hasta apoyo psicológico, estamos aquí para sostenerte.
+                    </p>
+                    <div style="display: grid; gap: 20px;">
+                        <div style="display: flex; gap: 15px; align-items: flex-start;">
+                            <div class="icon-shape" style="background: #fff1f2; color: var(--medical); flex-shrink: 0;" title="Servicio de atención médica virtual en tiempo real"><i class="fas fa-video"></i></div>
+                            <div>
+                                <h4 style="font-weight: 700;">Teleconsulta 24/7</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Acceso directo a especialistas en salud ocupacional.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="container">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 2.5rem; font-weight: 800;">Gestión sin fricciones</h2>
+            <p style="color: var(--text-muted);">Todo lo que necesitas en un panel unificado.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="icon-shape" title="Módulo para procesar automáticamente tus horarios y reportes sin errores"><i class="fas fa-bolt"></i></div>
+                <h3 style="margin-bottom: 15px;">Automatización</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Carga horaria y reportes generados en segundos, sin errores manuales.</p>
+            </div>
+            <div class="feature-item">
+                <div class="icon-shape" style="background: #ecfdf5; color: var(--success);" title="Módulo estadístico con gráficos interactivos sobre el rendimiento de tus grupos"><i class="fas fa-chart-pie"></i></div>
+                <h3 style="margin-bottom: 15px;">Analítica Avanzada</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Visualiza el progreso de tus grupos con gráficos interactivos de alto impacto.</p>
+            </div>
+            <div class="feature-item">
+                <div class="icon-shape" style="background: #fff7ed; color: #f59e0b;" title="Módulo para descargar evidencias académicas en formatos oficiales con un solo clic"><i class="fas fa-file-export"></i></div>
+                <h3 style="margin-bottom: 15px;">Exportación One-Click</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Prepara tus evidencias para acreditaciones internacionales al instante.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="end-spacer">
+        <div class="container">
+            <h2 style="font-size: 2rem; margin-bottom: 20px;">¿Listo para llevar tu labor al siguiente nivel?</h2>
+            <a href="Registro.html" class="btn btn-primary" style="padding: 18px 40px; font-size: 1rem;" title="Crear una cuenta nueva de docente 100% gratis">Crear mi cuenta gratuita</a>
+        </div>
+    </div>
+    <script src="js/Inicio.js"></script>
+</body>
+</html>
